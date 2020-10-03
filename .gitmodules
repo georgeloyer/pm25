@@ -1,0 +1,18 @@
+[submodule "Adafruit_CircuitPython_BusDevice"]
+	path = Adafruit_CircuitPython_BusDevice
+	url = https://github.com/adafruit/Adafruit_CircuitPython_BusDevice
+[submodule "Adafruit_CircuitPython_CLUE"]
+	path = Adafruit_CircuitPython_CLUE
+	url = https://github.com/adafruit/Adafruit_CircuitPython_CLUE
+[submodule "Adafruit_CircuitPython_LIS3MDL"]
+	path = Adafruit_CircuitPython_LIS3MDL
+	url = https://github.com/adafruit/Adafruit_CircuitPython_LIS3MDL
+[submodule "Adafruit_CircuitPython_PM25"]
+	path = Adafruit_CircuitPython_PM25
+	url = https://github.com/adafruit/Adafruit_CircuitPython_PM25
+[submodule "Adafruit_CircuitPython_Register"]
+	path = Adafruit_CircuitPython_Register
+	url = https://github.com/adafruit/Adafruit_CircuitPython_Register
+[submodule "Adafruit_PM25AQI"]
+	path = Adafruit_PM25AQI
+	url = https://github.com/adafruit/Adafruit_PM25AQI
