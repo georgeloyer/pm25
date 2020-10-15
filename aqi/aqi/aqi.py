@@ -20,80 +20,38 @@ class Aqi:
         self.r_code = 0
         self.g_code = 0
         self.b_code = 0
-        self.pli_table = {
-                "Good" :
-                    {"pm25lo" : 0.0,
-                    "pm25hi" : 12.0,
-                    "pm10lo" : 0.0,
-                    "pm10hi" : 55.0,
-                    "aqilo" : 0,
-                    "aqihi" : 50,
-                    "colorname" : "Green",
-                    "colorcode" : 0x00E400,
-                    "r" : 0,
-                    "g" : 228,
-                    "b" : 0},
-                "Moderate" :
-                    {"pm25lo" : 12.0,
-                    "pm25hi" : 35.5,
-                    "pm10lo" : 55.0,
-                    "pm10hi" : 155.0,
-                    "aqilo" : 50,
-                    "aqihi" : 100,
-                    "colorname" : "Yellow",
-                    "colorcode" : 0xFFFF00,
-                    "r" : 255,
-                    "g" : 255,
-                    "b" : 0},
-                "Unhealthy for Sensitive Groups" :
-                    {"pm25lo" : 35.5,
-                    "pm25hi" : 55.5,
-                    "pm10lo" : 155.0,
-                    "pm10hi" : 255.0,
-                    "aqilo" : 100,
-                    "aqihi" : 150,
-                    "colorname" : "Orange",
-                    "colorcode" : 0xFF7E00,
-                    "r" : 255,
-                    "g" : 126,
-                    "b" : 0},
-                "Unhealthy" :
-                    {"pm25lo" : 55.5,
-                    "pm25hi" : 150.5,
-                    "pm10lo" : 255.0,
-                    "pm10hi" : 355.0,
-                    "aqilo" : 150,
-                    "aqihi" : 200,
-                    "colorname" : "Red",
-                    "colorcode" : 0xFF0000,
-                    "r" : 255,
-                    "g" : 0,
-                    "b" : 0},
-                "Very Unhealthy" :
-                    {"pm25lo" : 150.5,
-                    "pm25hi" : 250.5,
-                    "pm10lo" : 355.0,
-                    "pm10hi" : 425.0,
-                    "aqilo" : 200,
-                    "aqihi" : 300,
-                    "colorname" : "Purple",
-                    "colorcode" : 0x8F3F97,
-                    "r" : 143,
-                    "g" : 63,
-                    "b" : 141},
-                "Hazardous" :
-                    {"pm25lo" : 250.5,
-                    "pm25hi" : 500.5,
-                    "pm10lo" : 425.0,
-                    "pm10hi" : 604.0,
-                    "aqilo" : 300,
-                    "aqihi" : 500,
-                    "colorname" : "Maroon",
-                    "colorcode" : 0x7E0023,
-                    "r" : 126,
-                    "g" : 0,
-                    "b" : 35},
-                    }
+        self.pli_table = (
+            ("Good", 0.0, 12.0, 0.0, 55.0, 0, 50,
+                "Green", 0x00E400, 0, 228, 0),
+            ("Moderate", 12.0, 35.5, 55.0, 155.0, 50, 100,
+                "Yellow", 0xFFFF00, 255, 255, 0),
+            ("Unhealthy for Sensitive Groups", 35.5, 55.5, 155.0, 255.0, 100, 150,
+                "Orange", 0xFF7E00, 255, 126, 0),
+            ("Unhealthy", 55.5, 150.5, 255.0, 355.0, 150, 200,
+                "Red", 0xFF0000, 255, 0, 0),
+            ("Very Unhealthy", 150.5, 250.5, 355.0, 425.0, 200, 300,
+                "Purple", 0x8F3F97, 143, 63, 141),
+            ("Hazardous", 250.5, 500.5, 425.0, 604.0, 300, 500,
+                "Maroon", 0x7E0023, 126, 0, 35))
+        self.pli_index = {
+            "CATNAME" : 0,
+            "PM25LO" : 1,
+            "PM25HI" : 2,
+            "PM10LO" : 3,
+            "PM10HI" : 4,
+            "AQILO" : 5,
+            "AQIHI" : 6,
+            "COLORNAME" : 7,
+            "COLORCODE" : 8,
+            "RCODE" : 9,
+            "GCODE" : 10,
+            "BCODE" : 11}
+
+    def _get_list(self, key):
+        ret_list = []
+        for i in range(len(self.pli_table)):
+            ret_list.append(self.pli_table[i][key])
+        return ret_list
 
     def sensor_to_aqi(self, raw, adjust, size):
         """ takes a raw measure in ug/m^3 from sensor and converts to EPA Air Quality Index (AQI)
@@ -118,6 +76,8 @@ class Aqi:
         if size == "2.5":
             if adjust == "LRAPA":
                 adjusted_raw = round(0.5 * raw - 0.66)
+                if adjusted_raw < 0:
+                    adjusted_raw = 0
             else:
                 if adjust == "AQ+U":
                     adjusted_raw = round(0.77 * raw + 2.6)
@@ -130,37 +90,43 @@ class Aqi:
         self.adjust = adjust
 
         if size == "2.5":
-            plo = "pm25lo"
-            phi = "pm25hi"
+            plo = self.pli_index["PM25LO"]
+            phi = self.pli_index["PM25HI"]
         else:
             if size == "10.0":
-                plo = "pm10lo"
-                phi = "pm10hi"
+                plo = self.pli_index["PM10LO"]
+                phi = self.pli_index["PM10HI"]
             else:
                 return "Error: size must be 2.5 or 10.0"
 
         # lookup adjusted_measure in pli_table and return upper/lower bounds
         # for measure and AQI by particle size
-        for category in self.pli_table:
-            if adjusted_raw >= self.pli_table[category][phi]:
+        category = 0
+        for upper_bound in self._get_list(phi):
+            if adjusted_raw >= upper_bound:
+                category = category + 1
                 continue
             aqi_category = category
             break
         measure_lo = self.pli_table[aqi_category][plo]
         measure_hi = self.pli_table[aqi_category][phi]
-        aqi_lo = self.pli_table[aqi_category]["aqilo"]
-        aqi_hi = self.pli_table[aqi_category]["aqihi"]
+        aqi_lo = self.pli_table[aqi_category][self.pli_index["AQILO"]]
+        aqi_hi = self.pli_table[aqi_category][self.pli_index["AQIHI"]]
 
         # update class variables with table entries for this aqi_category
         self.category = aqi_category
-        self.colorname = self.pli_table[aqi_category]["colorname"]
-        self.colorcode = self.pli_table[aqi_category]["colorcode"]
-        self.r_code = self.pli_table[aqi_category]["r"]
-        self.g_code = self.pli_table[aqi_category]["g"]
-        self.b_code = self.pli_table[aqi_category]["b"]
+        self.colorname = self.pli_table[aqi_category][self.pli_index["COLORNAME"]]
+        self.colorcode = self.pli_table[aqi_category][self.pli_index["COLORCODE"]]
+        self.r_code = self.pli_table[aqi_category][self.pli_index["RCODE"]]
+        self.g_code = self.pli_table[aqi_category][self.pli_index["GCODE"]]
+        self.b_code = self.pli_table[aqi_category][self.pli_index["BCODE"]]
 
         # compute the linear interpolation between the bounds
         self.aqi_value = round((aqi_hi - aqi_lo)/(measure_hi - measure_lo) *\
             (adjusted_raw - measure_lo) + aqi_lo)
 
         return self.aqi_value
+
+    def all_color_codes(self):
+        """ test method: returns all color_codes for display testing """
+        return self._get_list(self.pli_index["COLORCODE"])
