@@ -13,6 +13,3 @@
 [submodule "Adafruit_CircuitPython_Register"]
 	path = Adafruit_CircuitPython_Register
 	url = https://github.com/adafruit/Adafruit_CircuitPython_Register
-[submodule "Adafruit_PM25AQI"]
-	path = Adafruit_PM25AQI
-	url = https://github.com/adafruit/Adafruit_PM25AQI

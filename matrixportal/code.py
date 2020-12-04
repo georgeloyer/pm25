@@ -6,11 +6,13 @@
 import time
 import board
 import terminalio
+import busio
+from adafruit_pm25.i2c import PM25_I2C
 from adafruit_matrixportal.matrixportal import MatrixPortal
 
 def aqi_transform(val):
     aqi = pm_to_aqi(val)  # derive Air Quality Index from Particulate Matter 2.5 value
-    return "AQI: %d" % aqi
+    return "AQI:%d" % aqi
 
 def message_transform(val):  # picks message based on thresholds
     index = aqi_to_list_index(pm_to_aqi(val))
@@ -44,7 +46,7 @@ matrixportal = MatrixPortal(
 # Create a static label to show AQI
 matrixportal.add_text(
     text_font=terminalio.FONT,
-    text_position=(8, 7),
+    text_position=(0, 7),
     text_transform=aqi_transform,
 )
 
@@ -104,18 +106,37 @@ def get_color(aqi):
     return (150, 150, 150)
 
 sensor_refresh = None
+
+reset_pin = None
+# If you have a GPIO, its not a bad idea to connect it to the RESET pin
+# reset_pin = DigitalInOut(board.G0)
+# reset_pin.direction = Direction.OUTPUT
+# reset_pin.value = False
+
+# Create library object, use 'slow' 100KHz frequency!
+i2c = busio.I2C(board.SCL, board.SDA, frequency=100000)
+# Connect to a PM2.5 sensor over I2C
+pm25 = PM25_I2C(i2c, reset_pin)
+
+print("Found PM2.5 sensor, reading data...")
+
 while True:
-    # only query the weather every 10 minutes (and on first run)
     if (not sensor_refresh) or (time.monotonic() - sensor_refresh) > SENSOR_REFRESH_PERIOD:
         try:
             value = matrixportal.fetch()
-            print("Response is", value)
+            print("PurpleAir response is", value[0])
             matrixportal.set_text_color(get_color(pm_to_aqi(value[0])))
             sensor_refresh = time.monotonic()
         except RuntimeError as e:
-            print("Some error occured, retrying! -", e)
+            print("Unable to read from PurpleAir, retrying...", e)
             continue
+        try:
+            aqdata = pm25.read()
+            print("Local PlanTower PM2.5 reading is", aqdata["particles 25um"])
+            matrixportal.set_text(aqi_transform(value[0]) + " " + str(pm_to_aqi(aqdata["particles 25um"])), 0)
+        except RuntimeError as e:
+            print("Unable to read from local sensor, retrying...", e)
+        continue
 
     # Scroll it
     matrixportal.scroll_text(SCROLL_DELAY)
-
