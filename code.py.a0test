@@ -1,0 +1,36 @@
+# A0 test on matrixportal board
+
+import time
+import board
+import digitalio
+import busio
+
+# Connect MatrixPortal A0 to the RESET pin
+reset_pin = digitalio.DigitalInOut(board.A0)
+reset_pin.direction = digitalio.Direction.OUTPUT
+reset_pin.value = True
+
+# Create library object, use 'slow' 100KHz frequency!
+# i2c = busio.I2C(board.SCL, board.SDA, frequency=100000)
+# Connect to a PM2.5 sensor over I2C
+# pm25 = PM25_I2C(i2c, reset_pin)
+
+# print("Found PM2.5 sensor, reading data..
+
+while True:
+	if (not sensor_refresh or (time.monotonic - sensor_refresh)> 1:
+#         	try:
+#             		aqdata = pm25.read()
+#             		print("Local PlanTower PM2.5 reading is", aqdata["particles 25um"])
+#         	except RuntimeError as e:
+#             		print("Unable to read from local sensor, retrying...", e)
+#             		reset_pin.value = False  # reset the PlanTower
+#             		time.sleep(1)
+#             		reset_pin.value = True  # release the reset signal and let it try again
+#             		print("Reset pulse to PlanTower for 1 second")
+#             		continue
+		sensor_refresh = time.monotonic
+		if (reset_pin.value = True):
+			reset_pin.value = False
+		else:
+			reset_pin.value = True
